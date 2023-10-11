@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>分类页面</title>
+    <style>
+        body {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-top: 20px;
+        }
+
+        .button {
+            font-size: 20px;
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .results-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .textarea-container {
+            width: 48%;
+            max-width: 48%; /* 设置文本框容器的最大宽度 */
+        }
+
+        textarea {
+            width: 80%;
+            height: 800px;
+            margin: 20px;
+            padding: 10px;
+            resize: none;
+        }
+
+        #homeLink {
+            position: absolute;
+            top: 10px; /* 距离顶部的距离 */
+            right: 10px; /* 距离右侧的距离 */
+        }
+    </style>
+</head>
+<body>
+    <a href="/" id="homeLink">
+        <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
+    </a>
+    <h1>词语分词和分类功能</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput" style="display: none;">
+    </form>
+    <button class="button" id="uploadButton">上传文件</button>
+
+    <div class="results-container">
+        <div class="textarea-container">
+            <h2>分词结果</h2>
+            <textarea id="segResult" readonly></textarea>
+            <button class="button" id="segSaveButton">保存分词结果</button>
+        </div>
+        <div class="textarea-container">
+            <h2>分类结果</h2>
+            <textarea id="classResult" readonly></textarea>
+            <button class="button" id="classSaveButton">保存分类结果</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 上传文件按钮点击事件
+            $('#uploadButton').click(function() {
+                $('#fileInput').click();
+            });
+
+            // 文件选择时
+            $('#fileInput').change(function() {
+                var formData = new FormData($('#uploadForm')[0]);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/classify', // Flask路由
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(data) {
+                        // 更新分词结果文本框
+                        $('#segResult').val(data.segmentation_result);
+
+                        // 更新分类结果文本框
+                        $('#classResult').val(data.classification_result);
+                    },
+                    error: function(error) {
+                        alert('上传文件时发生错误：' + error.responseText);
+                    }
+                });
+            });
+
+            // 保存分词结果按钮点击事件
+            $('#segSaveButton').click(function() {
+                var segResult = $('#segResult').val();
+
+                // 创建一个虚拟链接并触发下载
+                var blob = new Blob([segResult], { type: 'text/plain' });
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '分词结果.txt';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            });
+
+            // 保存分类结果按钮点击事件
+            $('#classSaveButton').click(function() {
+                var classResult = $('#classResult').val();
+
+                // 创建一个虚拟链接并触发下载
+                var blob = new Blob([classResult], { type: 'text/plain' });
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '分类结果.txt';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            });
+        });
+    </script>
+</body>
+</html>

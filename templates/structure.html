@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>句子结构提取页面</title>
+    <style>
+        body {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-top: 20px;
+        }
+
+        .button {
+            font-size: 20px;
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+        }
+
+        textarea {
+            width: 80%;
+            height: 800px;
+            margin: 20px;
+            padding: 10px;
+            resize: none;
+        }
+
+        #homeLink {
+            position: absolute;
+            top: 10px; /* 距离顶部的距离 */
+            right: 10px; /* 距离右侧的距离 */
+        }
+    </style>
+</head>
+<body>
+    <a href="/" id="homeLink">
+        <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
+    </a>
+    <h1>句子结构提取页面</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput" style="display: none;">
+    </form>
+    <button class="button" id="uploadButton">上传文件</button>
+    <br> <!-- 强制换行 -->
+    <textarea id="resultTextarea" readonly></textarea>
+    <br> <!-- 强制换行 -->
+    <button class="button" id="saveButton">保存结果</button>
+    <br> <!-- 强制换行 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 上传文件按钮点击事件
+            $('#uploadButton').click(function() {
+                $('#fileInput').click();
+            });
+
+            // 文件选择时
+            $('#fileInput').change(function() {
+                var formData = new FormData($('#uploadForm')[0]);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/structure', // Flask路由
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(data) {
+                        // 更新文本框内容
+                        $('#resultTextarea').val(data);
+                    },
+                    error: function(error) {
+                        alert('上传文件时发生错误：' + error.responseText);
+                    }
+                });
+            });
+
+            // 保存结果按钮点击事件
+            $('#saveButton').click(function() {
+                var result = $('#resultTextarea').val();
+
+                // 创建一个虚拟链接并触发下载
+                var blob = new Blob([result], { type: 'text/plain' });
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '结构提取结果.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            });
+        });
+    </script>
+</body>
+</html>
