@@ -26,7 +26,7 @@
 
         textarea {
             width: 80%;
-            height: 800px;
+            height: 500px;
             margin: 20px;
             padding: 10px;
             resize: none;
@@ -47,7 +47,8 @@
     <form id="uploadForm" enctype="multipart/form-data">
         <input type="file" name="file" id="fileInput" style="display: none;">
     </form>
-    <button class="button" id="uploadButton">上传文件</button>
+    <button class="button" id="uploadButton">上传原始建筑条文</button>
+    <p>每句条文之间都以换行符分割，结果将展示在下面的文本框中，可点击保存按钮将结果保存在本地。</p>
     <br> <!-- 强制换行 -->
     <textarea id="resultTextarea" readonly></textarea>
     <br> <!-- 强制换行 -->

@@ -53,11 +53,15 @@
     <a href="/" id="homeLink">
         <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
     </a>
-    <h1>词语分词和分类功能</h1>
+    <h1>词语分词和分类页面</h1>
+    <form id="uploadDictForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="dictFileInput" style="display: none;">
+    </form>
     <form id="uploadForm" enctype="multipart/form-data">
         <input type="file" name="file" id="fileInput" style="display: none;">
     </form>
-    <button class="button" id="uploadButton">上传文件</button>
+    <button class="button" id="uploadDictButton">上传原始字典</button>
+    <button class="button" id="uploadButton">上传句子结构文件</button>
 
     <div class="results-container">
         <div class="textarea-container">
@@ -79,8 +83,29 @@
             $('#uploadButton').click(function() {
                 $('#fileInput').click();
             });
+            $('#uploadDictButton').click(function() {
+                $('#dictFileInput').click();
+            });
 
             // 文件选择时
+
+            $('#dictFileInput').change(function() {
+                var formData = new FormData($('#uploadDictForm')[0]);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/uploadDict', // Flask路由
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(data) {
+                        alert('上传成功' + data);
+                    },
+                    error: function(error) {
+                        alert('上传文件时发生错误：' + error.responseText);
+                    }
+                });
+            });
             $('#fileInput').change(function() {
                 var formData = new FormData($('#uploadForm')[0]);
 
@@ -101,6 +126,8 @@
                         alert('上传文件时发生错误：' + error.responseText);
                     }
                 });
+                // 清空文件
+                $('#fileInput').val("");
             });
 
             // 保存分词结果按钮点击事件
@@ -112,7 +139,7 @@
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = '分词结果.txt';
+                a.download = '分词结果.json';
                 a.click();
                 window.URL.revokeObjectURL(url);
             });
@@ -126,7 +153,7 @@
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = '分类结果.txt';
+                a.download = '分类结果.json';
                 a.click();
                 window.URL.revokeObjectURL(url);
             });
