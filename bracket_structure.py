@@ -4,7 +4,7 @@ import time
 
 
 def chatgpt_build_bracket(text_list):
-    openai.api_key = "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"
+    openai.api_key = "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"
     initial_messages = [{
         "role": "system",
         "content": "你是一个将自然语言句子转化为结构化句子的工具。"
@@ -140,7 +140,7 @@ Output:
         try:
             response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
             result.append({
-                "text": text,
+                "input": text,
                 "response": response["choices"][0]["message"]["content"]
             })
             print(response["choices"][0]["message"]["content"])
@@ -148,4 +148,4 @@ Output:
         except Exception as error:
             print(count, 'Exception occurred:', error)
             time.sleep(5)
-    return json.dumps(result, ensure_ascii=False, indent=4)
+    return result

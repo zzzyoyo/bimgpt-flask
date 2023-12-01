@@ -5,36 +5,43 @@
     <title>生成SNL页面</title>
     <style>
         body {
-            text-align: center;
+            text-align: center; /* 让表格水平居中 */
         }
 
-        h1 {
-            font-size: 36px;
-            margin-top: 20px;
+        table {
+            width: 80%;
+            margin: 20px auto; /* 将表格水平居中 */
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            width: 50%;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .response-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            resize: vertical;
         }
 
         .button {
-            font-size: 20px;
-            margin: 20px;
+            margin-top: 10px;
+            font-size: 16px;
             padding: 10px 20px;
             background-color: #007BFF;
             color: white;
             text-decoration: none;
             border: none;
             border-radius: 5px;
-        }
-
-        textarea {
-            width: 80%;
-            height: 800px;
-            margin: 20px;
-            padding: 10px;
-            resize: none;
-        }
-
-        #metricLabel, #passRateLabel {
-            font-size: 20px;
-            margin-top: 10px;
+            cursor: pointer;
         }
 
         #homeLink {
@@ -44,7 +51,7 @@
         }
     </style>
 </head>
-<body>
+<body background="../static/background.jpg">
     <a href="/" id="homeLink">
         <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
     </a>
@@ -54,6 +61,7 @@
     </form>
     <button class="button" id="uploadButton">上传句子结构文件</button>
     <br> <!-- 强制换行 -->
+    <h2>生成snl的结果:</h2>
     <textarea id="resultTextarea" readonly></textarea>
     <br> <!-- 强制换行 -->
     <div id="metricLabel">Metric:</div>
@@ -62,6 +70,7 @@
     <br> <!-- 强制换行 -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        var snlResults = "";
         $(document).ready(function() {
             // 上传文件按钮点击事件
             $('#uploadButton').click(function() {
@@ -70,6 +79,7 @@
 
             // 文件选择时
             $('#fileInput').change(function() {
+                console.log('aaa');
                 var formData = new FormData($('#uploadForm')[0]);
 
                 $.ajax({
@@ -80,7 +90,17 @@
                     contentType: false,
                     success: function(data) {
                         // 更新文本框内容
-                        $('#resultTextarea').val(data.result);
+                        snlResults = data.result;
+                        var snlStr = "";
+                        if(typeof snlResults == "string"){
+                            snlStr = snlResults;
+                        }
+                        else{
+                            for(var result of snlResults){
+                                snlStr += "输入：" + result["input"] + "\n" + "输出："+result["output"]+"\n"
+                            }
+                        }
+                        $('#resultTextarea').val(snlStr);
 
                         // 从返回的数据中获取metric和pass rate并显示在页面上
                         if (data.metric !== undefined && data.pass_rate !== undefined) {
@@ -92,13 +112,12 @@
                         alert('上传文件时发生错误：' + error.responseText);
                     }
                 });
+                $('#fileInput').val("");
             });
 
             // 保存结果按钮点击事件
             $('#saveButton').click(function() {
-                var result = $('#resultTextarea').val();
-                // 创建一个虚拟链接并触发下载
-                var blob = new Blob([result], { type: 'text/plain' });
+                var blob = new Blob([JSON.stringify(snlResults)], { type: 'text/plain' });
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;

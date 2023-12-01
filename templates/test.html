@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>句子结构提取页面</title>
+    <title>Flask Template Example</title>
     <style>
         body {
             text-align: center; /* 让表格水平居中 */
@@ -43,39 +43,28 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
-        #homeLink {
-            position: absolute;
-            top: 10px; /* 距离顶部的距离 */
-            right: 10px; /* 距离右侧的距离 */
-        }
     </style>
 </head>
-<body background="../static/background.jpg">
-    <a href="/" id="homeLink">
-        <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
-    </a>
-    <h1>句子结构提取页面</h1>
-    <form method="POST" action="/structure" enctype="multipart/form-data">
-        <input type="file" name="file">
+<body>
+    <form method="POST" action="/test" enctype="multipart/form-data">
+        <input type="file" name="file" style="display: none;">
         <input type="submit" value="上传原始建筑条文" class="button">
     </form>
-    {% if resps %}
+    <h1>Responses</h1>
     <table>
         <tr>
-            <th>原文</th>
-            <th>结果</th>
+            <th>Input</th>
+            <th>Response</th>
         </tr>
         {% for resp in resps %}
         <tr>
-            <td><textarea class="response-textarea" readonly>{{ resp["input"] }}</textarea></td>
+            <td>{{ resp["input"] }}</td>
             <td><textarea class="response-textarea">{{ resp["response"] }}</textarea></td>
         </tr>
         {% endfor %}
     </table>
-    <button class="button" onclick="saveOriginalData()">保存原始结果</button>
-    <button class="button" onclick="saveModifiedData()">保存修改后的结果</button>
-    {% endif %}
+    <button class="button" onclick="saveOriginalData()">保存原始数据</button>
+    <button class="button" onclick="saveModifiedData()">保存修改后的数据</button>
 
     <script>
         function saveOriginalData() {

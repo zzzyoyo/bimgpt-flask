@@ -36,7 +36,7 @@
 
         textarea {
             width: 80%;
-            height: 800px;
+            height: 300px;
             margin: 20px;
             padding: 10px;
             resize: none;
@@ -47,11 +47,19 @@
             top: 10px; /* 距离顶部的距离 */
             right: 10px; /* 距离右侧的距离 */
         }
+        #next {
+            position: absolute;
+            bottom: 10px; /* 距离顶部的距离 */
+            right: 10px; /* 距离右侧的距离 */
+        }
     </style>
 </head>
-<body>
+<body background="../static/background.jpg">
     <a href="/" id="homeLink">
         <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
+    </a>
+    <a href="/snl" id="next">
+        <img src="../static/next.png" alt="下一步" width="30" height="30">
     </a>
     <h1>词语分词和分类页面</h1>
     <form id="uploadDictForm" enctype="multipart/form-data">
@@ -78,6 +86,8 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        var segResult = "";
+        var classifyResult = "";
         $(document).ready(function() {
             // 上传文件按钮点击事件
             $('#uploadButton').click(function() {
@@ -99,7 +109,8 @@
                     processData: false,
                     contentType: false,
                     success: function(data) {
-                        alert('上传成功' + data);
+                        alert('上传成功');
+                        console.log(data);
                     },
                     error: function(error) {
                         alert('上传文件时发生错误：' + error.responseText);
@@ -107,8 +118,11 @@
                 });
             });
             $('#fileInput').change(function() {
-                var formData = new FormData($('#uploadForm')[0]);
+                //清空文本框
+                $('#classResult').val("");
+                $('#segResult').val("");
 
+                var formData = new FormData($('#uploadForm')[0]);
                 $.ajax({
                     type: 'POST',
                     url: '/classify', // Flask路由
@@ -117,10 +131,44 @@
                     contentType: false,
                     success: function(data) {
                         // 更新分词结果文本框
-                        $('#segResult').val(data.segmentation_result);
+                        segResult = data.segmentation_result;
+                        console.log(segResult);
+                        var segStr = "";
+                        for(var item of segResult){
+                            segStr += "原文：" + item.text + "\n\n分词结果：" + item.words.join('，') + "\n\n\n";
+                        }
+                        $('#segResult').val(segStr);
 
                         // 更新分类结果文本框
-                        $('#classResult').val(data.classification_result);
+                        classifyResult = data.classification_result;
+                        var classifyStr = "";
+                        if(typeof classifyResult == "string"){
+                            classifyStr = classifyResult;
+                        }
+                        else{
+                            classifyStr = "名词：\n";
+                            name_map = {"ENT": "实体","PEOPLE": "人员与组织架构","PROP": "属性","OTHER": "其它"};
+                            for(const [key, value] of Object.entries(classifyResult["NounItems"])){
+                                var fineTag = value["FineTags"].join('，');
+                                if(fineTag.length == 0){
+                                    fineTag = "无";
+                                }
+                                classifyStr += "\t" + value["Name"] + "\n\t\t粗标签：" + name_map[value["SecondaryTag"]] + "\n\t\t细标签：" + fineTag + "\n";
+                            }
+                            classifyStr += "\n动词：\n";
+                            for(var item in classifyResult["VerbItems"]){
+                                classifyStr += "\t" + item + "\n";
+                            }
+                            classifyStr += "\n副词形容词：\n";
+                            for(var item in classifyResult["AdItems"]){
+                                classifyStr += "\t" + item + "\n";
+                            }
+                            classifyStr += "\其他词性：\n";
+                            for(var item in classifyResult["OtherItems"]){
+                                classifyStr += "\t" + item + "\n";
+                            }
+                        }
+                        $('#classResult').val(classifyStr);
                     },
                     error: function(error) {
                         alert('上传文件时发生错误：' + error.responseText);
@@ -132,10 +180,8 @@
 
             // 保存分词结果按钮点击事件
             $('#segSaveButton').click(function() {
-                var segResult = $('#segResult').val();
-
                 // 创建一个虚拟链接并触发下载
-                var blob = new Blob([segResult], { type: 'text/plain' });
+                var blob = new Blob([JSON.stringify(segResult)], { type: 'text/plain' });
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
@@ -146,10 +192,8 @@
 
             // 保存分类结果按钮点击事件
             $('#classSaveButton').click(function() {
-                var classResult = $('#classResult').val();
-
                 // 创建一个虚拟链接并触发下载
-                var blob = new Blob([classResult], { type: 'text/plain' });
+                var blob = new Blob([JSON.stringify(classifyResult)], { type: 'text/plain' });
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;

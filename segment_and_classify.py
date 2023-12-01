@@ -6,10 +6,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from transformers import BertTokenizer, BertModel
 from torch import cuda
-import json
-import re
-import os
 
+BERT_BASE_PATH = r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\bert-chinese-base'
+COARSE_MODEL_PATH = r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\multi_classify_model.pth'
+FINE_MODEL_PATH = r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\multilabel_classify_with_others_model.pth'
 device = 'cuda' if cuda.is_available() else 'cpu'
 MAX_LEN = 256
 BATCH_SIZE = 32
@@ -50,7 +50,7 @@ class MultiLabelDataset(Dataset):
 class MultiLabelBERTModel(nn.Module):
     def __init__(self):
         super(MultiLabelBERTModel, self).__init__()
-        self.bert = BertModel.from_pretrained(r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\bert-chinese-base')
+        self.bert = BertModel.from_pretrained(BERT_BASE_PATH)
         ### New layers:
         self.linear1 = nn.Linear(768, 256)
         self.linear2 = nn.Linear(256, 32)  # 32个细粒度类型
@@ -100,7 +100,7 @@ class MultiClassDataset(Dataset):
 class SingleLabelBERTModel(nn.Module):
     def __init__(self):
         super(SingleLabelBERTModel, self).__init__()
-        self.bert = BertModel.from_pretrained(r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\bert-chinese-base')
+        self.bert = BertModel.from_pretrained(BERT_BASE_PATH)
         self.classifier = nn.Linear(768, 4)  # 粗粒度有4类
 
     def forward(self, ids, mask):
@@ -234,7 +234,7 @@ def classify(dictionary, words):
             test_texts.append(word)
 
     print(test_texts)
-    tokenizer = BertTokenizer.from_pretrained(r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\bert-chinese-base')
+    tokenizer = BertTokenizer.from_pretrained(BERT_BASE_PATH)
     test_labels = [0 for i in range(len(test_texts))]  # 没有标签的测试集，随便生成一个长度和texts一样的即可
     testing_set = MultiClassDataset(test_texts, test_labels, tokenizer, MAX_LEN)
     test_params = {'batch_size': BATCH_SIZE,
@@ -244,7 +244,7 @@ def classify(dictionary, words):
     # 粗粒度分类器
     model = SingleLabelBERTModel()
     model.to(device)
-    model.load_state_dict(torch.load(r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\multi_classify_model.pth'))
+    model.load_state_dict(torch.load(COARSE_MODEL_PATH))
     coarse_outputs, _ = single_label_validation(model, testing_loader)
     coarse_outputs = np.argmax(coarse_outputs, axis=1)
     # 分类为建筑实体的数据集
@@ -258,9 +258,9 @@ def classify(dictionary, words):
     # 细粒度分类器
     model = MultiLabelBERTModel()
     model.to(device)
-    model.load_state_dict(torch.load(r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\multilabel_classify_with_others_model.pth'))
+    model.load_state_dict(torch.load(FINE_MODEL_PATH))
     fine_outputs, _ = multi_label_validation(model, testing_loader)
-    fine_outputs = np.array(fine_outputs) >= 0.6
+    fine_outputs = np.array(fine_outputs) >= 0.5
 
     j = 0
     tag_map = {
@@ -269,7 +269,7 @@ def classify(dictionary, words):
         2: "PEOPLE",
         3: "OTHER"
     }
-    with open(r'D:\bimgpt\d40_rulegeneration\Coarse&Fine-grained Classification\dataset\threshold=50,level=0\IndexToLabels.txt', 'r', encoding='utf-8') as f:
+    with open(r'static\IndexToLabels.txt', 'r', encoding='utf-8') as f:
         labels_name = [line[line.index(':') + 1:].replace('\n', '') for line in f.readlines()]
     for i in range(len(test_texts)):
         if coarse_outputs[i] != 0:
