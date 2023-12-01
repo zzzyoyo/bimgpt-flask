@@ -30,5 +30,5 @@ def snl(resps_str, dictionary):
         "error": response.error,
         "pass_rate": f'%.2f' % pass_rate
     }
-    print(return_map)
+    # print(return_map)
     return return_map

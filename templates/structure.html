@@ -81,7 +81,7 @@
         function saveOriginalData() {
             // 将原始数据保存为JSON文件
             var jsonData = {{ resps | tojson }};
-            saveJSONToFile(jsonData, 'original_data.json');
+            saveJSONToFile(jsonData, 'middle_original_data.json');
         }
 
         function saveModifiedData() {
@@ -89,13 +89,13 @@
             var modifiedData = [];
             var rows = document.querySelectorAll('table tr:not(:first-child)');
             rows.forEach(function(row) {
-                var input = row.cells[0].textContent;
+                var input = row.cells[0].querySelector('textarea').value;
                 var response = row.cells[1].querySelector('textarea').value;
                 modifiedData.push({ 'input': input, 'response': response });
             });
 
             // 将修改后的数据保存为JSON文件
-            saveJSONToFile(modifiedData, 'modified_data.json');
+            saveJSONToFile(modifiedData, 'middle_modified_data.json');
         }
 
         function saveJSONToFile(data, filename) {

@@ -56,76 +56,74 @@
         <img src="../static/home_icon.png" alt="回到主页" width="30" height="30">
     </a>
     <h1>生成SNL页面</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" name="file" id="fileInput" style="display: none;">
+    <form method="POST" action="/snl" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="上传句子结构文件" class="button">
     </form>
-    <button class="button" id="uploadButton">上传句子结构文件</button>
-    <br> <!-- 强制换行 -->
-    <h2>生成snl的结果:</h2>
-    <textarea id="resultTextarea" readonly></textarea>
-    <br> <!-- 强制换行 -->
-    <div id="metricLabel">Metric:</div>
-    <div id="passRateLabel">Pass Rate:</div>
-    <button class="button" id="saveButton">保存结果</button>
-    <br> <!-- 强制换行 -->
+    {% if resps %}
+    <table>
+        <tr>
+            <th>输入：中间结构化表示</th>
+            <th>输出：SNL表示</th>
+        </tr>
+        {% for resp in resps %}
+        <tr>
+            <td><textarea class="response-textarea">{{ resp["input"] }}</textarea></td>
+            <td><textarea class="response-textarea" readonly>{{ resp["output"] }}</textarea></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p>Metric:{{ metric }}</p>
+    <p>Pass rate:{{ pass_rate }}</p>
+    <button class="button" onclick="saveData()">保存结果</button>
+    <button class="button" onclick="reGenerate()">重新生成</button>
+    {% endif %}
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        var snlResults = "";
-        $(document).ready(function() {
-            // 上传文件按钮点击事件
-            $('#uploadButton').click(function() {
-                $('#fileInput').click();
+        function saveData() {
+            // 将原始数据保存为JSON文件
+            var jsonData = {{ resps | tojson }};
+            saveJSONToFile(jsonData, 'snl_original_data.json');
+        }
+
+        function reGenerate() {
+            // 获取修改后的数据
+            var modifiedData = [];
+            var rows = document.querySelectorAll('table tr:not(:first-child)');
+            rows.forEach(function(row) {
+                modifiedData.push({ 'text': '', 'response': row.cells[0].querySelector('textarea').value });
             });
+            console.log('11');
 
-            // 文件选择时
-            $('#fileInput').change(function() {
-                console.log('aaa');
-                var formData = new FormData($('#uploadForm')[0]);
-
-                $.ajax({
-                    type: 'POST',
-                    url: '/snl', // Flask路由
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(data) {
-                        // 更新文本框内容
-                        snlResults = data.result;
-                        var snlStr = "";
-                        if(typeof snlResults == "string"){
-                            snlStr = snlResults;
-                        }
-                        else{
-                            for(var result of snlResults){
-                                snlStr += "输入：" + result["input"] + "\n" + "输出："+result["output"]+"\n"
-                            }
-                        }
-                        $('#resultTextarea').val(snlStr);
-
-                        // 从返回的数据中获取metric和pass rate并显示在页面上
-                        if (data.metric !== undefined && data.pass_rate !== undefined) {
-                            $('#metricLabel').text('Metric: ' + data.metric);
-                            $('#passRateLabel').text('Pass Rate: ' + data.pass_rate);
-                        }
-                    },
-                    error: function(error) {
-                        alert('上传文件时发生错误：' + error.responseText);
-                    }
-                });
-                $('#fileInput').val("");
+            // 将修改后的数据重新上传
+            $.ajax({
+                type: 'POST',
+                url: '/snl',
+                data: JSON.stringify(modifiedData),
+                processData: false,
+                contentType: 'application/json',
+                success: function(data) {
+                    console.log(data);
+                    document.open();
+                    document.write(data);
+                    document.close();
+                },
+                error: function(error) {
+                    alert('上传文件时发生错误：' + error.responseText);
+                }
             });
+        }
 
-            // 保存结果按钮点击事件
-            $('#saveButton').click(function() {
-                var blob = new Blob([JSON.stringify(snlResults)], { type: 'text/plain' });
-                var url = window.URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'SNL.json';
-                a.click();
-                window.URL.revokeObjectURL(url);
-            });
-        });
+        function saveJSONToFile(data, filename) {
+            var blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>

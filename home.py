@@ -85,18 +85,22 @@ def extract():
 @app.route('/snl', methods=['GET', 'POST'])
 def generate():
     if request.method == 'POST':
-        uploaded_file = request.files['file']
-
-        if uploaded_file.filename != '':
+        print('111')
+        if 'file' in request.files:
+            uploaded_file = request.files['file']
             file_content = uploaded_file.read().decode('utf-8')
+        else:
+            file_content = json.dumps(request.json)
+            print(file_content)
 
+        if file_content != '':
             if dictionary is None:
                 return jsonify({'result': "请先上传字典"})
             return_map = snl(file_content, dict_str)
             print(return_map)
-            return jsonify(return_map)
+            return render_template('snl.html', resps=return_map['result'], metric=return_map['metric'], pass_rate=return_map['pass_rate'])
 
-    return render_template('snl.html')
+    return render_template('snl.html', resps=None, metric=None, pass_rate=None)
 
 
 if __name__ == '__main__':
