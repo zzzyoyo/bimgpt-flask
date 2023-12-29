@@ -135,7 +135,7 @@
                         console.log(segResult);
                         var segStr = "";
                         for(var item of segResult){
-                            segStr += "原文：" + item.text + "\n\n分词结果：" + item.words.join('，') + "\n\n\n";
+                            segStr += "原文：" + item.input + "\n\n分词结果：" + item.words.join('，') + "\n\n\n";
                         }
                         $('#segResult').val(segStr);
 
